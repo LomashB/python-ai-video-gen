@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Video Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="background">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div class="app-container">
+        <header class="glass-panel header">
+            <div class="logo">
+                <i class="fas fa-film"></i>
+                <h1>AI Video Creator</h1>
+            </div>
+            <p class="subtitle">Create stunning motivational videos in seconds</p>
+        </header>
+
+        <main class="content">
+            <section class="glass-panel create-section">
+                <h2><i class="fas fa-magic"></i> Create New Video</h2>
+                
+                <!-- Motivational Quote Form -->
+                <form action="{{ url_for('create') }}" method="post" class="form-group">
+                    <div class="input-group">
+                        <label for="quote">Motivational Quote</label>
+                        <textarea name="quote" id="quote" placeholder="Enter your inspirational quote here..."></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label for="author">Author (Optional)</label>
+                        <input type="text" name="author" id="author" placeholder="Author name">
+                    </div>
+                    <div class="button-group">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-play-circle"></i> Create Video
+                        </button>
+                        <a href="{{ url_for('generate_random') }}" class="btn btn-secondary">
+                            <i class="fas fa-random"></i> Generate Random
+                        </a>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Current Tasks -->
+            {% if tasks %}
+            <section class="glass-panel tasks-section">
+                <h2><i class="fas fa-tasks"></i> Recent Tasks</h2>
+                <div class="tasks-list">
+                    {% for task_id, task in tasks.items() %}
+                    <div class="task-item glass-card">
+                        <div class="task-header">
+                            <span class="task-status status-{{ task.status }}">{{ task.status }}</span>
+                            <span class="task-time">{{ (task.end_time - task.start_time)|round(1) }}s</span>
+                        </div>
+                        <p class="task-quote">"{{ task.quote }}" - {{ task.author }}</p>
+                        {% if task.status == 'completed' and task.output_path %}
+                        <div class="task-actions">
+                            <a href="{{ url_for('output_file', filename=task.output_path.split('/')[-1]) }}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-download"></i> Download
+                            </a>
+                            <button class="btn btn-sm btn-secondary preview-btn" data-video="{{ url_for('output_file', filename=task.output_path.split('/')[-1]) }}">
+                                <i class="fas fa-eye"></i> Preview
+                            </button>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
+            {% endif %}
+
+            <!-- Asset Management -->
+            <section class="glass-panel files-section">
+                <h2><i class="fas fa-folder-open"></i> Asset Management</h2>
+                
+                <!-- Tabs for different file types -->
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="upload">Upload</button>
+                    <button class="tab-btn" data-tab="videos">Videos</button>
+                    <button class="tab-btn" data-tab="music">Music</button>
+                    <button class="tab-btn" data-tab="fonts">Fonts</button>
+                    <button class="tab-btn" data-tab="outputs">Output</button>
+                </div>
+                
+                <div class="tab-content">
+                    <!-- Upload Tab -->
+                    <div class="tab-pane active" id="upload">
+                        <form action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data" class="upload-form">
+                            <div class="file-drop-area">
+                                <span class="file-message">Drag & drop files here or click to browse</span>
+                                <input type="file" name="file" class="file-input">
+                            </div>
+                            <div class="file-type-select">
+                                <label for="file-type">File Type:</label>
+                                <select name="file_type" id="file-type">
+                                    <option value="video">Video Background</option>
+                                    <option value="music">Background Music</option>
+                                    <option value="font">Custom Font</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-cloud-upload-alt"></i> Upload File
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- Videos Tab -->
+                    <div class="tab-pane" id="videos">
+                        <div class="file-grid">
+                            {% if videos %}
+                                {% for video in videos %}
+                                <div class="file-card glass-card">
+                                    <div class="file-icon"><i class="fas fa-film"></i></div>
+                                    <div class="file-info">
+                                        <div class="file-name">{{ video }}</div>
+                                        <div class="file-actions">
+                                            <button class="btn btn-sm btn-secondary preview-asset" data-type="video" data-file="{{ video }}">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="empty-message">No video files uploaded yet. Upload some background videos to get started!</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Music Tab -->
+                    <div class="tab-pane" id="music">
+                        <div class="file-grid">
+                            {% if music %}
+                                {% for audio in music %}
+                                <div class="file-card glass-card">
+                                    <div class="file-icon"><i class="fas fa-music"></i></div>
+                                    <div class="file-info">
+                                        <div class="file-name">{{ audio }}</div>
+                                        <div class="file-actions">
+                                            <button class="btn btn-sm btn-secondary preview-asset" data-type="audio" data-file="{{ audio }}">
+                                                <i class="fas fa-play"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="empty-message">No music files uploaded yet. Add some background music to enhance your videos!</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Fonts Tab -->
+                    <div class="tab-pane" id="fonts">
+                        <div class="file-grid">
+                            {% if fonts %}
+                                {% for font in fonts %}
+                                <div class="file-card glass-card">
+                                    <div class="file-icon"><i class="fas fa-font"></i></div>
+                                    <div class="file-info">
+                                        <div class="file-name">{{ font }}</div>
+                                        <div class="file-type">{{ font.split('.')[-1] }}</div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="empty-message">No font files uploaded yet. Add custom fonts for better text styling!</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Output Videos Tab -->
+                    <div class="tab-pane" id="outputs">
+                        <div class="file-grid">
+                            {% if output_videos %}
+                                {% for video in output_videos %}
+                                <div class="file-card glass-card">
+                                    <div class="file-icon"><i class="fas fa-video"></i></div>
+                                    <div class="file-info">
+                                        <div class="file-name">{{ video }}</div>
+                                        <div class="file-actions">
+                                            <a href="{{ url_for('output_file', filename=video) }}" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                            <button class="btn btn-sm btn-secondary preview-btn" data-video="{{ url_for('output_file', filename=video) }}">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <p class="empty-message">No output videos generated yet. Create your first video!</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="glass-panel footer">
+            <p>Made with <i class="fas fa-heart"></i> by AbrossIT | <a href="https://github.com/yourusername/python-ai-video-gen" target="_blank"><i class="fab fa-github"></i> GitHub</a></p>
+        </footer>
+    </div>
+
+    <!-- Video Preview Modal -->
+    <div class="modal" id="videoModal">
+        <div class="modal-content glass-panel">
+            <span class="close-modal">&times;</span>
+            <h3>Video Preview</h3>
+            <div class="video-container">
+                <video controls id="modalVideo">
+                    <source src="" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio Player Modal -->
+    <div class="modal" id="audioModal">
+        <div class="modal-content glass-panel">
+            <span class="close-modal">&times;</span>
+            <h3>Audio Preview</h3>
+            <div class="audio-container">
+                <audio controls id="modalAudio">
+                    <source src="" type="audio/mpeg">
+                    Your browser does not support the audio element.
+                </audio>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="flash-messages">
+            {% for message in messages %}
+            <div class="flash glass-panel">
+                {{ message }}
+                <button class="close-flash">&times;</button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    {% endwith %}
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html> 
