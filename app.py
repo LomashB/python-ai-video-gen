@@ -24,16 +24,22 @@ def allowed_file(filename):
 @app.route('/')
 def index():
     # Get list of videos in assets folder
-    videos = [f for f in os.listdir(os.path.join(UPLOAD_FOLDER, 'videos')) 
-              if os.path.isfile(os.path.join(UPLOAD_FOLDER, 'videos', f))]
+    videos = []
+    if os.path.exists(os.path.join(UPLOAD_FOLDER, 'videos')):
+        videos = [f for f in os.listdir(os.path.join(UPLOAD_FOLDER, 'videos')) 
+                if os.path.isfile(os.path.join(UPLOAD_FOLDER, 'videos', f))]
     
     # Get list of music files
-    music = [f for f in os.listdir(os.path.join(UPLOAD_FOLDER, 'music')) 
-             if os.path.isfile(os.path.join(UPLOAD_FOLDER, 'music', f))]
+    music = []
+    if os.path.exists(os.path.join(UPLOAD_FOLDER, 'music')):
+        music = [f for f in os.listdir(os.path.join(UPLOAD_FOLDER, 'music')) 
+               if os.path.isfile(os.path.join(UPLOAD_FOLDER, 'music', f))]
     
     # Get list of fonts
-    fonts = [f for f in os.listdir(os.path.join(UPLOAD_FOLDER, 'fonts')) 
-             if os.path.isfile(os.path.join(UPLOAD_FOLDER, 'fonts', f))]
+    fonts = []
+    if os.path.exists(os.path.join(UPLOAD_FOLDER, 'fonts')):
+        fonts = [f for f in os.listdir(os.path.join(UPLOAD_FOLDER, 'fonts')) 
+               if os.path.isfile(os.path.join(UPLOAD_FOLDER, 'fonts', f))]
     
     # Get list of output videos
     output_videos = []
@@ -77,6 +83,9 @@ def upload_file():
             flash('Invalid file type')
             return redirect(request.url)
         
+        # Ensure directory exists
+        os.makedirs(os.path.join(app.config['UPLOAD_FOLDER'], subfolder), exist_ok=True)
+        
         # Save the file
         save_path = os.path.join(app.config['UPLOAD_FOLDER'], subfolder, filename)
         file.save(save_path)
@@ -114,7 +123,7 @@ def create_video_task(quote, author):
     tasks[task_id]["end_time"] = time.time()
     return task_id
 
-@app.route('/create', methods=['POST'])
+@app.route('/create_video', methods=['POST'])
 def create_video():
     # Extract form data
     quote = request.form.get('quote', '')
@@ -172,14 +181,18 @@ def generate_random():
     flash(f'Creating video with quote: "{quote}" - {author}')
     return redirect(url_for('index'))
 
+# Create required directories
+os.makedirs('assets/videos', exist_ok=True)
+os.makedirs('assets/music', exist_ok=True)
+os.makedirs('assets/fonts', exist_ok=True)
+os.makedirs('output', exist_ok=True)
+os.makedirs('temp', exist_ok=True)
+os.makedirs('static', exist_ok=True)
+
 if __name__ == '__main__':
-    # Create required directories
-    os.makedirs('assets/videos', exist_ok=True)
-    os.makedirs('assets/music', exist_ok=True)
-    os.makedirs('assets/fonts', exist_ok=True)
-    os.makedirs('output', exist_ok=True)
-    os.makedirs('temp', exist_ok=True)
-    os.makedirs('static', exist_ok=True)
-    
     # Run the app
-    app.run(debug=True, host='0.0.0.0', port=5000) 
+    app.run(debug=True, host='0.0.0.0', port=5000)
+    
+# This is for Vercel serverless deployment
+def app_handler(environ, start_response):
+    return app.wsgi_app(environ, start_response) 
