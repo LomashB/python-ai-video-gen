@@ -1,0 +1,7 @@
+{
+    "name": "python-ai-video-gen",
+    "version": "1.0.0",
+    "scripts": {
+      "build": "bash build_script.sh"
+    }
+  }
