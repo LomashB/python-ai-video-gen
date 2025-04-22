@@ -26,7 +26,40 @@ Make sure your project is accessible through a Git repository (GitHub, GitLab, o
 
 2. When you deploy to Vercel, you'll need to add these as environment variables in the Vercel dashboard.
 
-## Step 3: Deploy with Vercel CLI
+## Step 3: Vercel Configuration
+
+The `vercel.json` file contains all the necessary configuration:
+
+```json
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "app.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "app.py"
+    }
+  ],
+  "buildCommand": "pip install -r requirements.txt",
+  "outputDirectory": ".",
+  "installCommand": "pip install -r requirements.txt",
+  "devCommand": "python app.py"
+}
+```
+
+Here's what each of these fields means:
+
+- **buildCommand**: Command executed during the build step on the server (`pip install -r requirements.txt`)
+- **outputDirectory**: Directory where the build artifacts are located (`.` for the root directory)
+- **installCommand**: Command to install dependencies (`pip install -r requirements.txt`)
+- **devCommand**: Command to run the development server locally (`python app.py`)
+
+## Step 4: Deploy with Vercel CLI
 
 1. Login to Vercel:
    ```
@@ -42,7 +75,24 @@ Make sure your project is accessible through a Git repository (GitHub, GitLab, o
 
 4. When asked about environment variables, add your Google API key.
 
-## Step 4: Set Up Environment Variables in Vercel Dashboard
+## Step 5: Deploy from GitHub
+
+Alternatively, you can deploy directly from GitHub:
+
+1. Push your code to GitHub
+2. Go to [Vercel Dashboard](https://vercel.com/dashboard)
+3. Click "New Project"
+4. Import your GitHub repository
+5. Configure the project settings:
+   - Framework Preset: Other
+   - Root Directory: ./
+   - Build Command: pip install -r requirements.txt
+   - Output Directory: .
+   - Install Command: pip install -r requirements.txt
+   - Development Command: python app.py
+6. Click "Deploy"
+
+## Step 6: Set Up Environment Variables in Vercel Dashboard
 
 1. Go to the [Vercel Dashboard](https://vercel.com/dashboard)
 2. Select your project
@@ -50,7 +100,7 @@ Make sure your project is accessible through a Git repository (GitHub, GitLab, o
 4. Add your environment variables:
    - `GOOGLE_API_KEY`: Your Google Gemini API key
 
-## Step 5: Configure Serverless Functions
+## Step 7: Configure Serverless Functions
 
 Note that the free tier of Vercel has limitations for serverless functions:
 - Execution timeout: 10 seconds (may not be enough for video generation)
